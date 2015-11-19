@@ -38,13 +38,17 @@ def anonymize(inputs, output="anonymized", anon_id=None, anon_name=None, recurse
         try:
             dcm = dicom.read_file(inp, force=True)
             patient_id = dcm[PATIENT_ID].value or "not provided" # also serves as check for valid DICOM file
+            patient_id.encode()
             patient_name = dcm.PatientsName or "not provided"
-            anon_id = anon_id or hashlib.sha512(patient_id).hexdigest()[:10]
-            anon_name = anon_name or hashlib.sha512(patient_name).hexdigest()[:10]
+            patient_name.encode()
+            anon_id = anon_id or hashlib.sha512(patient_id.encode()).hexdigest()[:10]
+            anon_id.encode()
+            anon_name = anon_name or hashlib.sha512(patient_name.encode()).hexdigest()[:10]
+            anon_name.encode()
 
             anonymizer.anonymize(dcm, patient_id=anon_id, patient_name=anon_name)
 
-            rel_path = inp.replace(patient_id, anon_id).replace(patient_name, anon_name)
+            rel_path = inp.replace(patient_id, anon_id).replace(patient_name.original_string, anon_name)
             rel_path = rel_path.replace(".." + os.path.sep, "").replace("." + os.path.sep, "")
             out_path = os.path.join(output_dir, rel_path)
             out_dir = os.path.split(out_path)[0]
@@ -84,7 +88,7 @@ def get_input_paths(inputs, recurse):
     a generator for all input files requested
     """
 
-    if isinstance(inputs, basestring):
+    if isinstance(inputs, str):
         inputs = [inputs]
 
     for inp in inputs:
